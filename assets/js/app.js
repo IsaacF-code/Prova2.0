@@ -1,39 +1,54 @@
 // Resposta
 const URL_BASE = "https://6388fbf0a4bb27a7f796c4f7.mockapi.io";
-let dataUser = [];
-let dataPosts = [];
 
-const getDataFromApi = function(endpoint) {
-  const url = URL_BASE + endpoint;
+const getDataFromApi = function (endpoint) {
+  const url = URL_BASE + "/user/" + endpoint + "/posts";
 
   const ajax = new XMLHttpRequest();
 
-  ajax.onreadystatechange = function() {
+  const urlPost = URL_BASE + "/user/" + endpoint;
+  const ajaxPost = new XMLHttpRequest();
+
+  ajax.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      let data = JSON.parse(this.responseText);
-      dataUser = data;
-      findPosts(4);
+      let dataPost = JSON.parse(this.responseText);
+
+      ajaxPost.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          let dataUser = JSON.parse(this.responseText);
+
+          findPosts(dataPost, dataUser);
+        }
+      };
+
     }
   };
 
   ajax.open('GET', url, true);
   ajax.send();
 
+  ajaxPost.open('GET', urlPost, true);
+  ajaxPost.send();
+
 };
 
-const findPosts = function(total) {
-  for (let i = 1; i <= total; i++) {
-    createPost(null, dataUser[i]);
-  }
+const findPosts = function (dataPost, dataUser) {
+  createPost(dataPost, dataUser);
 }
 
-const createPost = function(post, user) {
+const createPost = function (post, user) {
   const paginationDiv = document.querySelector(".pagination");
-  paginationDiv.insertAdjacentHTML("beforebegin", `
+
+  let nPosts = parseInt(post.length, 10);
+
+  let cont
+  for (cont = 1; cont < nPosts; cont++) {
+
+    paginationDiv.insertAdjacentHTML("beforebegin", `
     <article class="box post post-excerpt">
           <header>
-            <h2><a href="#">${post ? post.titlePost : "Teste"}</a></h2>
-            <p>${post ? post.captionPost : "Teste"}</p>
+            <h2><a href="#">${post ? post[cont].titlePost : "Teste"}</a></h2>
+            <p>${post ? post[cont].captionPost : "Teste"}</p>
           </header>
           <div class="info">
             <span class="date"><span class="month">Dez</span> <span class="day">01</span><span class="year">,
@@ -45,20 +60,29 @@ const createPost = function(post, user) {
               <li><a href="#" class="icon brands fa-facebook-f">21</a></li>
             </ul>
           </div>
-          <a href="#" class="image featured"><img src="https://loremflickr.com/640/480/business" alt="" /></a>
+          <a href="#" class="image featured"><img src="${post[cont].imagePost}" alt="" /></a>
           <p>
-            ${post ? post.textPost : "Teste"}
+            ${post ? post[cont].textPost : "Teste"}
           </p>
           <p class="author-avatar">
             <strong>Create by</strong>
-            ${user.userName}
-            <img src="${user.avatar}" />
+            ${user ? user.userName : "Teste"}
+            <img src="${user ? user.avatar : "Teste"}" />
           </p>
         </article>
   `)
+
+  }
+
+
 }
 
+let usuarios = 1
+
 const carregarMais = document.querySelector("#carregar-mais");
-carregarMais.addEventListener("click", function() {
-  getDataFromApi("/user");
+carregarMais.addEventListener("click", function () {
+  if (usuarios < 35) {
+    getDataFromApi(usuarios)
+    usuarios++
+  }
 })
